@@ -37,7 +37,7 @@ jobs:
         run: pnpm typecheck
 
       - name: Unit tests
-        run: pnpm test:unit -- --retry=2
+        run: pnpm exec vitest run --exclude "packages/desktop/test/e2e/**/*.test.ts" --retry=2
 
       - name: Bundle linux-x64 AppImage
         run: pnpm bundle:desktop -- --os linux --arch x64
