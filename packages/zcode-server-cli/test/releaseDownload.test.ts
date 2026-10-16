@@ -111,8 +111,10 @@ describe("release downloader", () => {
       destination: join(dir, "release.tar.gz"),
       sha256,
       expectedSizeBytes: payload.byteLength,
-      timeoutMs: 50,
-      overallTimeoutMs: 1_000,
+      // 空闲超时与写入间隔需要保持足够倍率：共享 CI runner 上的事件循环抖动
+      // 不应让仍在活跃写入的流被误判为空闲而中止。
+      timeoutMs: 300,
+      overallTimeoutMs: 5_000,
       maxAttempts: 1,
     });
   });
