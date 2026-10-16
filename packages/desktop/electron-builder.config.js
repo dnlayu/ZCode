@@ -555,6 +555,13 @@ function signWindowsBrowserImportHelper(context) {
   ]);
 }
 
+// ZCODE_LINUX_TARGETS=AppImage 之类的逗号分隔列表允许构建方只产出部分 Linux 目标，
+// 避免缺少 rpmbuild/fpm 的环境（社区 CI、本地出包）因 deb/rpm/pacman 全量打包而失败。
+const linuxBuildTargets = (process.env.ZCODE_LINUX_TARGETS ?? "")
+  .split(",")
+  .map((target) => target.trim())
+  .filter(Boolean);
+
 /** @type {import("electron-builder").Configuration} */
 export default {
   appId: desktopProductIdentity.appId,
@@ -868,7 +875,7 @@ export default {
       : {}),
   },
   linux: {
-    target: ["AppImage", "deb", "rpm", "pacman"],
+    target: linuxBuildTargets.length > 0 ? linuxBuildTargets : ["AppImage", "deb", "rpm", "pacman"],
     artifactName: buildDesktopArtifactName("linux"),
     // desktop 包名是 scoped package（@zcode/desktop），electron-builder 默认会把
     // Linux executable/Icon 推成 @zcodedesktop。部分桌面环境无法按这个 icon name 命中

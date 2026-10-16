@@ -1,0 +1,53 @@
+name: mod-ci
+
+on:
+  push:
+    branches: ["mod/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: mod-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux-appimage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      ZCODE_ENV: production
+      ZCODE_LINUX_TARGETS: AppImage
+      ELECTRON_MIRROR: https://github.com/electron/electron/releases/download/
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.14.0
+          cache: pnpm
+
+      - name: Bootstrap
+        run: pnpm bootstrap
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test:unit
+
+      - name: Bundle linux-x64 AppImage
+        run: pnpm bundle:desktop -- --os linux --arch x64
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ZCode-linux-x64-AppImage
+          path: packages/desktop/dist/*.AppImage
+          if-no-files-found: error
