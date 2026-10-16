@@ -1,4 +1,4 @@
-import { mkdtemp, mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, rename, rm, writeFile } from "node:fs/promises";
 import * as fs from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, parse, resolve } from "node:path";
@@ -237,8 +237,13 @@ describe("Host incremental subagent snapshots", () => {
     f.emit(path);
     await until(() => expect(vi.mocked(fs.readFile).mock.results.at(-1)?.value).toBe(gate.promise));
     const obsolete = initialWatcherFor(f.userRoot);
+    // ext4 倾向把刚释放的目录 inode 复用给立即重建的目录，使 dev/ino 相等性判断
+    // 认为“目录未被替换”，旧 watcher 永远不会被关闭。先在旧目录仍存在时创建
+    // 替补目录，再删除旧目录并把替补整体改名过来，保证新目录必然是不同 inode。
+    const staged = join(dirname(f.userRoot), "user-replacement");
+    await mkdir(staged);
     await rm(f.userRoot, { recursive: true });
-    await mkdir(f.userRoot);
+    await rename(staged, f.userRoot);
     await writeFile(path, markdown("aaa", "replacement"));
     // 快速替换时可能只有原生事件；路径仍存在，也必须关闭旧目录对象的监听。
     for (const events of parentEvents.get(dirname(f.userRoot)) ?? [])
