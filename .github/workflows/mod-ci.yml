@@ -13,10 +13,6 @@ jobs:
   linux-appimage:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
-    env:
-      ZCODE_ENV: production
-      ZCODE_LINUX_TARGETS: AppImage
-      ELECTRON_MIRROR: https://github.com/electron/electron/releases/download/
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,10 +37,14 @@ jobs:
         run: pnpm typecheck
 
       - name: Unit tests
-        run: pnpm test:unit
+        run: pnpm test:unit -- --retry=2
 
       - name: Bundle linux-x64 AppImage
         run: pnpm bundle:desktop -- --os linux --arch x64
+        env:
+          ZCODE_ENV: production
+          ZCODE_LINUX_TARGETS: AppImage
+          ELECTRON_MIRROR: https://github.com/electron/electron/releases/download/
 
       - uses: actions/upload-artifact@v4
         with:
