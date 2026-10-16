@@ -35,8 +35,10 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         "@": resolve(REPO_ROOT, "packages/ui/src"),
-        "@zcode/shared": resolve(REPO_ROOT, "packages/shared/src/index.ts"),
-        // Share 镜像不安装 @zcode/ui（它会带入 services/rpc 闭包），子路径导入必须显式指向源码。
+        // @zcode/shared 是 web-share 已声明的 workspace 依赖，根入口与子路径都应走 package
+        // exports 解析；字符串别名是前缀匹配，会把 "@zcode/shared/<subpath>" 拼成
+        // "src/index.ts/<subpath>" 直接构建失败。Share 镜像不安装 @zcode/ui（它会带入
+        // services/rpc 闭包），ui 子路径仍需显式指向源码。
         "@zcode/ui/useTheme": resolve(REPO_ROOT, "packages/ui/src/useTheme.ts"),
         "@zcode/ui/conversation-share-readonly": resolve(
           REPO_ROOT,
