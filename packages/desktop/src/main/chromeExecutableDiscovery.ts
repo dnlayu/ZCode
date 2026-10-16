@@ -254,6 +254,10 @@ export async function resolveChromeExecutablePath(
   options: ChromeExecutableDiscoveryOptions = {},
 ): Promise<string | null> {
   const platform = options.platform ?? process.platform;
+  // 不支持的平台（aix/freebsd 等）不存在任何 Chrome 发行版。历史逻辑会让未知平台
+  // 继续走标准目录扫描，在装了 Chrome 的宿主机上把“未安装”误判为“已发现”，
+  // 让 chrome_executable_not_found 的语义依赖宿主环境。这里直接返回 null。
+  if (!SUPPORTED_PLATFORMS.has(platform)) return null;
   const env = options.env ?? process.env;
   const commandLines =
     options.processCommandLines ??
